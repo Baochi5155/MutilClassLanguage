@@ -32,8 +32,22 @@ public class Program
             });
         });
 
+        builder.Services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy =>
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyMethod()
+                      .AllowAnyHeader();
+            });
+        });
         var app = builder.Build();
 
+        // Sử dụng CORS cho tất cả request
+        app.UseCors();
+
+        // Đóng comment hoặc xóa app.UseHttpsRedirection() khi chạy trên Docker/Render
+        // app.UseHttpsRedirection();
         // Tự động nạp dữ liệu mẫu vào InMemory Database khi khởi động
         using (var scope = app.Services.CreateScope())
         {
