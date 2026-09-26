@@ -41,11 +41,8 @@ public class Program
             db.Database.EnsureCreated();
         }
 
-        if (app.Environment.IsDevelopment())
-        {
-            app.MapOpenApi();
-            app.MapScalarApiReference(); // Giao diện test API của Scalar
-        }
+        app.MapOpenApi();
+        app.MapScalarApiReference();
 
         app.UseHttpsRedirection();
 
