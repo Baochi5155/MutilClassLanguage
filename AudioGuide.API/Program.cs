@@ -1,5 +1,6 @@
 ﻿using AudioGuide.BLL.Services;
 using AudioGuide.DAL;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
@@ -12,7 +13,16 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Services.AddControllers();
-        builder.Services.AddOpenApi(); // OpenAPI gốc của .NET 9
+
+        // Cấu hình OpenAPI: Xóa Servers URL để Scalar tự động trỏ đúng domain HTTPS trên Render
+        builder.Services.AddOpenApi(options =>
+        {
+            options.AddDocumentTransformer((document, context, cancellationToken) =>
+            {
+                document.Servers.Clear();
+                return Task.CompletedTask;
+            });
+        });
 
         // 1. Cấu hình DbContext dùng InMemory Database để test nhanh
         builder.Services.AddDbContext<AppDbContext>(options =>
@@ -21,7 +31,7 @@ public class Program
         // 2. Đăng ký Dependency Injection cho tầng BLL
         builder.Services.AddScoped<IAudioGuideService, AudioGuideService>();
 
-        // 3. Cấu hình CORS để Web (React) và Mobile (React Native) gọi API không bị chặn
+        // 3. Cấu hình CORS mở cho Web (React) và Mobile (React Native)
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowAll", policy =>
@@ -32,22 +42,14 @@ public class Program
             });
         });
 
-        builder.Services.AddCors(options =>
-        {
-            options.AddDefaultPolicy(policy =>
-            {
-                policy.AllowAnyOrigin()
-                      .AllowAnyMethod()
-                      .AllowAnyHeader();
-            });
-        });
         var app = builder.Build();
 
-        // Sử dụng CORS cho tất cả request
-        app.UseCors();
+        // Nhận diện giao thức HTTPS đằng sau reverse proxy của Render
+        app.UseForwardedHeaders(new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+        });
 
-        // Đóng comment hoặc xóa app.UseHttpsRedirection() khi chạy trên Docker/Render
-        // app.UseHttpsRedirection();
         // Tự động nạp dữ liệu mẫu vào InMemory Database khi khởi động
         using (var scope = app.Services.CreateScope())
         {
@@ -55,12 +57,11 @@ public class Program
             db.Database.EnsureCreated();
         }
 
+        // Bật OpenAPI và giao diện Scalar
         app.MapOpenApi();
         app.MapScalarApiReference();
 
-        app.UseHttpsRedirection();
-
-        // Kích hoạt CORS trước Authorization
+        // Kích hoạt CORS
         app.UseCors("AllowAll");
 
         app.UseAuthorization();
