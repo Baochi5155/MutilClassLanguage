@@ -2,19 +2,19 @@ name: Backend CI Pipeline
 
 on:
   push:
-    branches: [ "master", "main", "dev" ]
+    branches: [ "master", "main" ]
   pull_request:
-    branches: [ "master", "main", "dev" ]
+    branches: [ "master", "main" ]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Setup .NET
+    - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '9.0.x'
@@ -22,7 +22,7 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
 
-    - name: Build Backend
+    - name: Build Solution
       run: dotnet build --no-restore --configuration Release
 
     - name: Run Unit Tests

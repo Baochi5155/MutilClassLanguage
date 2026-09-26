@@ -1,14 +1,16 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
 
 namespace AudioGuide.Tests;
 
 [TestClass]
 public class AudioGuideLogicTests
 {
-    // Hàm mẫu kiểm tra mã ngôn ngữ (Logic thuần)
+    // Giả lập hàm kiểm tra mã ngôn ngữ hợp lệ từ hệ thống thuyết minh
     private bool IsSupportedLanguage(string langCode)
     {
-        var supported = new[] { "vi", "en", "ja", "fr" };
+        if (string.IsNullOrWhiteSpace(langCode)) return false;
+        var supported = new[] { "vi", "en", "ja", "fr", "ko", "zh" };
         return supported.Contains(langCode.ToLower());
     }
 
@@ -21,7 +23,7 @@ public class AudioGuideLogicTests
         // Act
         bool result = IsSupportedLanguage(lang);
 
-        // Assert (dùng Assert tích hợp sẵn của MSTest)
+        // Assert
         Assert.IsTrue(result);
     }
 
